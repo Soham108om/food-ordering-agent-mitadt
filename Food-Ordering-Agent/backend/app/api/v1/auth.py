@@ -36,7 +36,7 @@ async def swiggy_login(response: Response, session_id: str = Depends(get_session
         value=session_id,
         httponly=True,
         samesite="lax",
-        secure=False  # Set True in production with HTTPS
+        secure=settings.COOKIE_SECURE
     )
 
     return {

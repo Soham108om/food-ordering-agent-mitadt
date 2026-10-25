@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: food-ordering-agent-api
+    runtime: python
+    plan: free
+    rootDir: Food-Ordering-Agent
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: DATABASE_PATH
+        value: /tmp/food_agent_sessions.db
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: SESSION_ENCRYPTION_KEY
+        generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SWIGGY_REDIRECT_URI
+        sync: false
+      - key: FRONTEND_ORIGIN
+        sync: false

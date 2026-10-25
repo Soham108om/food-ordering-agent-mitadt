@@ -18,6 +18,8 @@ class Settings(BaseModel):
     SCOPE: str = os.environ.get("SCOPE", "mcp:tools")
     DATABASE_PATH: str = os.environ.get("DATABASE_PATH", "food_agent_sessions.db")
     SESSION_ENCRYPTION_KEY: str = os.environ.get("SESSION_ENCRYPTION_KEY", "")
+    FRONTEND_ORIGIN: str = os.environ.get("FRONTEND_ORIGIN", "")
+    COOKIE_SECURE: bool = os.environ.get("COOKIE_SECURE", "false").lower() == "true"
 
     def get_fernet_key(self) -> bytes:
         raw_key = self.SESSION_ENCRYPTION_KEY or os.environ.get("SECRET_KEY", "food_ordering_agent_secure_salt_key_2026")

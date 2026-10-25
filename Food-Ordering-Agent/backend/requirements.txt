@@ -1,0 +1,13 @@
+aiosqlite
+cryptography
+fastapi
+google-genai
+langchain
+langchain-mcp-adapters==0.3.2
+langgraph
+mcp>=1.29.0,<2
+pydantic
+python-dotenv
+requests
+sse-starlette
+uvicorn[standard]
