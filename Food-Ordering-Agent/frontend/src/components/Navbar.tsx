@@ -1,18 +1,23 @@
 'use client';
 
 import React from 'react';
-import { Utensils, CheckCircle2, ShieldAlert, MapPin } from 'lucide-react';
+import Link from 'next/link';
+import { Utensils, CheckCircle2, ShieldAlert, MapPin, FlaskConical, LogOut } from 'lucide-react';
 
 interface NavbarProps {
   authenticated: boolean;
   onLoginClick: () => void;
-  selectedAddressId?: string;
+  onLogoutClick: () => void;
+  isLoggingOut?: boolean;
+  selectedAddressLabel?: string;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   authenticated,
   onLoginClick,
-  selectedAddressId
+  onLogoutClick,
+  isLoggingOut = false,
+  selectedAddressLabel
 }) => {
   return (
     <header className="bg-white/90 backdrop-blur-md border-b border-sand-dark/60 sticky top-0 z-40">
@@ -34,19 +39,38 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Address & Subtle Swiggy Auth Status */}
         <div className="flex items-center space-x-3">
-          {selectedAddressId && (
+          <Link
+            href="/extension"
+            className="hidden md:inline-flex items-center gap-1.5 bg-sand-light border border-sand-dark/60 hover:border-terracotta-border hover:text-terracotta text-espresso-muted px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors"
+          >
+            <FlaskConical className="w-3.5 h-3.5" />
+            <span>Jury Extension Demo</span>
+          </Link>
+
+          {selectedAddressLabel && (
             <div className="hidden md:flex items-center space-x-1.5 bg-sand-light border border-sand-dark/60 px-3 py-1.5 rounded-full text-xs text-espresso-muted">
               <MapPin className="w-3.5 h-3.5 text-terracotta shrink-0" />
               <span className="font-mono truncate max-w-[160px]">
-                {selectedAddressId}
+                {selectedAddressLabel}
               </span>
             </div>
           )}
 
           {authenticated ? (
-            <div className="flex items-center space-x-1.5 bg-olive-light border border-olive-border/60 text-olive px-3.5 py-1.5 rounded-full text-xs font-medium">
-              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-              <span>Swiggy Connected</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center space-x-1.5 bg-olive-light border border-olive-border/60 text-olive px-3.5 py-1.5 rounded-full text-xs font-medium">
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                <span>Swiggy Connected</span>
+              </div>
+              <button
+                type="button"
+                onClick={onLogoutClick}
+                disabled={isLoggingOut}
+                className="inline-flex items-center gap-1.5 border border-sand-dark hover:border-terracotta hover:text-terracotta text-espresso-muted px-3 py-1.5 rounded-full text-xs font-semibold transition disabled:opacity-50"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
+              </button>
             </div>
           ) : (
             <button

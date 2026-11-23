@@ -2,10 +2,19 @@ from typing import TypedDict, Any, Optional, Dict, List
 
 class AgentState(TypedDict, total=False):
     session_id: Optional[str]
+    user_id: Optional[str]
     swiggy_access_token: Optional[str]
 
     user_request: str
+    allow_restaurant_selection: bool
+    allow_item_selection: bool
+    vegetarian_preference: bool
+    resume_from: Optional[str]
+    reorder_item_id: Optional[str]
+    reorder_item_name: Optional[str]
+    reorder_item_unavailable: bool
     requirements: dict
+    no_match_details: Optional[Dict[str, Any]]
     cuisine: Optional[str]
     food_components: Optional[List[str]]
 
@@ -30,6 +39,7 @@ class AgentState(TypedDict, total=False):
 
     cart_result: Any
     cart: Any
+    cart_pricing: Dict[str, Any]
 
     payment_options: Any
     payment_method: Optional[str]
@@ -44,6 +54,8 @@ class AgentState(TypedDict, total=False):
     payment_status_result: Any
 
     tracking_result: Any
+    tracking_summary: Optional[Dict[str, Optional[str]]]
+    tracking_error: Optional[str]
 
     current_step: str
     needs_user_input: bool

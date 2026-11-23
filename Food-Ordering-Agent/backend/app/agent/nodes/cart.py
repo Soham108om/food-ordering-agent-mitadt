@@ -1,6 +1,7 @@
 from app.agent.state import AgentState
 from app.mcp.client import invoke_mcp
 from app.agent.nodes.utils import notify_state_update
+from app.mcp.parsers import parse_cart_pricing
 
 async def cart_node(state: AgentState) -> AgentState:
     state["current_step"] = "CART"
@@ -48,6 +49,7 @@ async def cart_node(state: AgentState) -> AgentState:
             swiggy_access_token=token
         )
         state["cart"] = live_cart
+        state["cart_pricing"] = parse_cart_pricing(live_cart)
         print("✓ Cart updated and live cart retrieved")
         state["needs_user_input"] = False
     except Exception as e:

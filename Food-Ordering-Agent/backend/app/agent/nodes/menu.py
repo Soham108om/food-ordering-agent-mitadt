@@ -115,6 +115,7 @@ async def menu_node(state: AgentState) -> AgentState:
 
 def menu_filter_node(state: AgentState) -> AgentState:
     state["current_step"] = "FILTER_MENU"
+    state["no_match_details"] = None
     print("\n🔎 FILTER MENU")
 
     items = state.get("menu_options", [])
@@ -136,11 +137,17 @@ def menu_filter_node(state: AgentState) -> AgentState:
         all_search_terms.add(cuisine)
     all_search_terms.discard("")
 
+    rejection_counts = {
+        "food_mismatch": 0,
+        "vegetarian": 0,
+        "budget": 0
+    }
     valid = []
     for item in items:
         item_name = str(item.get("name", "")).lower()
 
         # Item relevance: Matches any requested component, cuisine, or main food term
+        matches_requested_food = True
         if all_search_terms:
             matches_term = any(
                 re.search(rf"\b{re.escape(term)}\b", item_name)
@@ -148,17 +155,24 @@ def menu_filter_node(state: AgentState) -> AgentState:
             )
             # Also match thalis, meals, or combos if compound food requested
             matches_combo = any(w in item_name for w in ["thali", "combo", "meal", "platter", "special"])
-            if not (matches_term or matches_combo):
-                continue
+            matches_requested_food = matches_term or matches_combo
 
         # Vegetarian Hard Constraint
-        if vegetarian and not item.get("is_veg", False):
-            continue
+        meets_dietary_requirement = not vegetarian or item.get("is_veg", False)
 
         # Budget Hard Constraint (applied to individual item price)
         price = item.get("price", float("inf"))
-        if max_budget is not None and price > max_budget:
+        meets_budget = max_budget is None or price <= max_budget
+
+        if not matches_requested_food:
+            rejection_counts["food_mismatch"] += 1
+        if not meets_dietary_requirement:
+            rejection_counts["vegetarian"] += 1
+        if not meets_budget:
+            rejection_counts["budget"] += 1
             print(f"❌ {item.get('name')}: ₹{price} > ₹{max_budget}")
+
+        if not (matches_requested_food and meets_dietary_requirement and meets_budget):
             continue
 
         valid.append(item)
@@ -178,6 +192,25 @@ def menu_filter_node(state: AgentState) -> AgentState:
 
     if not filtered:
         state["replanning_required"] = True
+        if state.get("reorder_item_id"):
+            state["reorder_item_unavailable"] = True
+        suggestions = []
+        if rejection_counts["budget"]:
+            suggestions.append("budget")
+        if rejection_counts["vegetarian"]:
+            suggestions.append("vegetarian")
+        if rejection_counts["food_mismatch"] or not items or state.get("reorder_item_id"):
+            suggestions.append("food")
+        if state.get("error_message"):
+            rejection_counts["menu_search_failed"] = 1
+        elif not items:
+            rejection_counts["no_menu_items"] = 1
+        state["no_match_details"] = {
+            "stage": "menu",
+            "candidate_count": len(items),
+            "reasons": rejection_counts,
+            "suggestions": suggestions or ["food"]
+        }
         print("⚠️ No menu item satisfies all hard constraints.")
     else:
         state["replanning_required"] = False
@@ -245,11 +278,30 @@ def item_selection_node(state: AgentState) -> AgentState:
         return state
 
     selected = ranked[0]
+    reorder_item_id = state.get("reorder_item_id")
+    reorder_item_name = str(state.get("reorder_item_name") or "").strip().casefold()
+    if reorder_item_id:
+        selected = next(
+            (item for item in ranked if str(item.get("item_id", "")) == reorder_item_id),
+            None
+        ) or next(
+            (item for item in ranked if str(item.get("name", "")).strip().casefold() == reorder_item_name),
+            None
+        )
+        if selected is None:
+            selected = ranked[0]
+            state["reorder_item_unavailable"] = True
+        else:
+            state["reorder_item_unavailable"] = False
+
     state["selected_item"] = selected
+    state["needs_user_input"] = bool(state.get("allow_item_selection"))
 
     print("👤 SELECT ITEM")
     print("✓", selected["name"])
     print("✓ Price: ₹", selected["price"])
+    if state["needs_user_input"]:
+        print("⏸️ Waiting for the user to confirm or change the recommended dish.")
 
     notify_state_update(state)
     return state

@@ -1,13 +1,26 @@
 from app.agent.state import AgentState
 
+def route_agent_entry(state: AgentState) -> str:
+    return state.get("resume_from") or "understand"
+
 def route_after_restaurant_rank(state: AgentState) -> str:
     if state.get("replanning_required"):
         return "replan"
     return "continue"
 
+def route_after_restaurant_selection(state: AgentState) -> str:
+    if state.get("allow_restaurant_selection") and state.get("needs_user_input"):
+        return "waiting"
+    return "continue"
+
 def route_after_menu_rank(state: AgentState) -> str:
     if state.get("replanning_required"):
         return "replan"
+    return "continue"
+
+def route_after_item_selection(state: AgentState) -> str:
+    if state.get("allow_item_selection") and state.get("needs_user_input"):
+        return "waiting"
     return "continue"
 
 def route_after_cart(state: AgentState) -> str:

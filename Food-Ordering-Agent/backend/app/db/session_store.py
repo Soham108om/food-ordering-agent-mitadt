@@ -71,6 +71,15 @@ class SessionStore:
             )
             await db.commit()
 
+    async def delete_session(self, session_id: str) -> None:
+        """Delete a session and its stored encrypted Swiggy token."""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "DELETE FROM sessions WHERE session_id = ?",
+                (session_id,)
+            )
+            await db.commit()
+
     async def get_swiggy_token(self, session_id: str) -> Optional[str]:
         async with aiosqlite.connect(self.db_path) as db:
             async with db.execute("SELECT encrypted_swiggy_token FROM sessions WHERE session_id = ?", (session_id,)) as cursor:

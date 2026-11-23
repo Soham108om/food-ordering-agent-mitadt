@@ -1,4 +1,4 @@
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph, END, START
 from app.agent.state import AgentState
 
 from app.agent.nodes.understand import understand_node
@@ -23,8 +23,11 @@ from app.agent.nodes.tracking import tracking_node
 from app.agent.nodes.replan import replan_node
 
 from app.agent.routing import (
+    route_agent_entry,
     route_after_restaurant_rank,
+    route_after_restaurant_selection,
     route_after_menu_rank,
+    route_after_item_selection,
     route_after_cart,
     route_after_payment,
     route_after_order
@@ -64,8 +67,20 @@ def build_food_agent_graph():
     # Replan
     builder.add_node("replan", replan_node)
 
-    # Entry point
-    builder.set_entry_point("understand")
+    # Fresh requests start at understanding; user responses resume at their
+    # current stage rather than repeating restaurant and menu searches.
+    builder.add_conditional_edges(
+        START,
+        route_agent_entry,
+        {
+            "understand": "understand",
+            "customization": "customization",
+            "restaurant_search": "restaurant_search",
+            "menu": "menu",
+            "payment": "payment",
+            "order": "order"
+        }
+    )
 
     # Main Edges
     builder.add_edge("understand", "plan")
@@ -82,7 +97,14 @@ def build_food_agent_graph():
             "replan": "replan"
         }
     )
-    builder.add_edge("restaurant_selection", "menu")
+    builder.add_conditional_edges(
+        "restaurant_selection",
+        route_after_restaurant_selection,
+        {
+            "waiting": END,
+            "continue": "menu"
+        }
+    )
 
     # Menu Pipeline Edges
     builder.add_edge("menu", "menu_filter")
@@ -97,7 +119,14 @@ def build_food_agent_graph():
             "replan": "replan"
         }
     )
-    builder.add_edge("item_selection", "customization")
+    builder.add_conditional_edges(
+        "item_selection",
+        route_after_item_selection,
+        {
+            "waiting": END,
+            "continue": "customization"
+        }
+    )
     builder.add_edge("customization", "cart")
 
     # Cart Router

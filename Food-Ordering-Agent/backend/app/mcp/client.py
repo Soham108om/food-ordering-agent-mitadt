@@ -5,6 +5,20 @@ from app.core.config import settings
 
 MCP_TOOL_TIMEOUT = 30
 
+def format_mcp_error(error: Exception) -> str:
+    """Return nested MCP/async task errors without losing the underlying cause."""
+    nested_errors = getattr(error, "exceptions", None)
+    if nested_errors:
+        details = [
+            format_mcp_error(nested)
+            for nested in nested_errors
+            if isinstance(nested, Exception)
+        ]
+        if details:
+            return "; ".join(details)
+
+    return f"{type(error).__name__}: {error}"
+
 def create_mcp_client(swiggy_access_token: str) -> MultiServerMCPClient:
     """
     Creates a MultiServerMCPClient instance connected to Swiggy Food MCP.
@@ -60,3 +74,5 @@ async def invoke_mcp(
         raise TimeoutError(
             f"Swiggy MCP tool '{tool_name}' timed out after {timeout} seconds."
         ) from e
+    except Exception as e:
+        raise RuntimeError(format_mcp_error(e)) from e

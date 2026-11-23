@@ -36,7 +36,7 @@ async def swiggy_login(response: Response, session_id: str = Depends(get_session
         value=session_id,
         httponly=True,
         samesite="lax",
-        secure=settings.COOKIE_SECURE
+        secure=False  # Set True in production with HTTPS
     )
 
     return {
@@ -96,3 +96,26 @@ async def swiggy_status(session_id: str = Depends(get_session_id)):
         "session_id": session_id,
         "authenticated": bool(token)
     }
+
+@router.post("/logout")
+async def swiggy_logout(
+    response: Response,
+    session_id: str = Depends(get_session_id)
+):
+    """Clear the local Swiggy session and its HttpOnly browser cookie."""
+    from app.api.v1.agent import is_agent_operation_active
+
+    if is_agent_operation_active(session_id):
+        raise HTTPException(
+            status_code=409,
+            detail="Wait for the current agent action to finish before logging out."
+        )
+
+    await session_store.delete_session(session_id)
+    response.delete_cookie(
+        key="food_agent_session",
+        path="/",
+        httponly=True,
+        samesite="lax"
+    )
+    return {"status": "logged_out"}
