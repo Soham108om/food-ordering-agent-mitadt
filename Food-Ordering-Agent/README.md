@@ -89,6 +89,16 @@ It demonstrates preference persistence, feedback-driven ranking weights, and the
 
 For the browser extension demonstration, open `http://localhost:3000/extension` while both servers are running.
 
+### Jury fallback if Swiggy OTP is unavailable
+
+The ordering page needs a Swiggy-authenticated session for live provider calls. If sign-in is blocked by an OTP cooldown:
+
+1. **Plan A:** If you can authenticate before the jury, keep the browser session active and do not log out. Avoid live order confirmation unless you intend to place a real order.
+2. **Plan B:** Start the backend and frontend and open `http://localhost:3000/extension`. The Unit-3/Unit-4 extension page calls local memory/specialist APIs and does not require a Swiggy token. Demonstrate specialist verdicts and the accept/reject feedback loop.
+3. **Plan C:** If the browser/backend demo is unavailable, run `python JURY_DEMO_RUNNER.py` from the project root. This is fully offline and demonstrates the same extension logic in the terminal.
+
+Explain clearly that Plans B/C demonstrate the memory and specialist extensions, not live restaurant search or order placement. Use your recorded live-flow video/screenshots as evidence for the base ordering UI.
+
 ## Tests and checks
 
 From the project root:
@@ -118,6 +128,6 @@ The backend regression suite passed **48 tests** during jury-document preparatio
 - [Offline demo runner](JURY_DEMO_RUNNER.py)
 - [Quick reference card](JURY_QUICK_CARD.md)
 
-Replace the marked screenshot and demo-video placeholders with genuine captures from the running application. Add the fourth member’s name and actual contribution before final submission.
+Replace the remaining screenshot and demo-video placeholders with genuine captures from the running application. Add the fourth member’s name and actual contribution before final submission.
 
 The older `PROJECT_TECHNICAL_REPORT.md`, `JURY_SLIDES.md`, and `JURY_QUICK_CARD.md` contain synthetic or scripted example metrics; do not present those as live production results.
